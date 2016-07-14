@@ -50,6 +50,10 @@ class WidgetFactory(object):
         # produce instance from tag name
         instance = self._get_class(xml.tag)(master, **attributes)
 
+        # store reference in apps widget cache
+        if 'name' in attributes:
+            self._app[attributes['name']] = instance
+
         # dispatch further processing by master widget
         if isinstance(master, tk.Menu) and isinstance(instance, tk.Menu):
             master.add_cascade(menu=instance, **attributes.add_cascade)

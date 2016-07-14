@@ -20,9 +20,22 @@ class TkApp(object):
 
         self._materialized = False
         self._bound_events = []
+        self._widget_index = dict()
 
         self._factory = WidgetFactory(self)
         self._root = None
+
+    def __getitem__(self, key):
+        '''
+        produce the widget of the given name
+        '''
+        return self._widget_index[key]
+
+    def __setitem__(self, key, value):
+        '''
+        store the given widget under the given name
+        '''
+        self._widget_index[key] = value
 
     def bind(self, event, callback):
         '''
