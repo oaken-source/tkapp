@@ -21,6 +21,7 @@ class TkApp(object):
         self._materialized = False
         self._bound_events = []
 
+        self._factory = WidgetFactory(self)
         self._root = None
 
     def bind(self, event, callback):
@@ -41,7 +42,7 @@ class TkApp(object):
         '''
         materialize the specified layout and menu to a window
         '''
-        self._root = WidgetFactory.from_file(self._layout)
+        self._root = self._factory.from_file(self._layout)
         self._materialized = True
 
         for (event, callback) in self._bound_events:

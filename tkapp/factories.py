@@ -13,27 +13,31 @@ class WidgetFactory(object):
     this class produces tk widgets from xml
     '''
 
-    @classmethod
-    def from_file(cls, path):
+    def __init__(self, app):
+        '''
+        constructor - store the app reference
+        '''
+        self._app = app
+
+    def from_file(self, path):
         '''
         produce a widget from an xml file
         '''
         with open(path) as xml:
-            return cls.from_string(xml.read())
+            return self.from_string(xml.read())
 
-    @classmethod
-    def from_string(cls, xml):
+    def from_string(self, xml):
         '''
         produce a widget from an xml string
         '''
-        return cls.from_etree(et.fromstring(xml.strip()))
+        return self.from_etree(et.fromstring(xml.strip()))
 
-    @classmethod
-    def from_etree(cls, xml, master=None):
+    def from_etree(self, xml, master=None):
         '''
         produce a widget from an xml etree - magic happens here
         '''
         attributes = PartitionedAttributes(xml.attrib)
+        attributes.bind_callbacks(self._app)
 
         # cover menu command and separator special cases
         if xml.tag == 'tkinter.Menu.add_command':
@@ -44,7 +48,7 @@ class WidgetFactory(object):
             return
 
         # produce instance from tag name
-        instance = cls._get_class(xml.tag)(master, **attributes)
+        instance = self._get_class(xml.tag)(master, **attributes)
 
         # dispatch further processing by master widget
         if isinstance(master, tk.Menu) and isinstance(instance, tk.Menu):
@@ -58,7 +62,7 @@ class WidgetFactory(object):
 
         # produce child widgets
         for child in xml.getchildren():
-            cls.from_etree(child, instance)
+            self.from_etree(child, instance)
 
         # all done - return created widget instance
         return instance
@@ -68,8 +72,8 @@ class WidgetFactory(object):
         '''
         produce the class from the given import name
         '''
-        mod, cls = name.rsplit('.', 1)
-        return getattr(importlib.import_module(mod), cls)
+        modname, clsname = name.rsplit('.', 1)
+        return getattr(importlib.import_module(modname), clsname)
 
 
 class PartitionedAttributes(object):
@@ -95,6 +99,18 @@ class PartitionedAttributes(object):
 
         for partition in tmp:
             setattr(self, partition, PartitionedAttributes(tmp[partition]))
+
+        self._partitions = tmp.keys()
+
+    def bind_callbacks(self, app):
+        '''
+        bind callback strings to methods on the app instance
+        '''
+        if 'command' in self._attributes:
+            self._attributes['command'] = getattr(app, self._attributes['command'])
+
+        for partition in self._partitions:
+            getattr(self, partition).bind_callbacks(self)
 
     def __getattr__(self, _):
         '''
