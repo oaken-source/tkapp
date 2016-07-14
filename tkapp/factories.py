@@ -37,10 +37,10 @@ class WidgetFactory(object):
 
         # cover menu command and separator special cases
         if xml.tag == 'tkinter.Menu.add_command':
-            master.add_command(**attributes[None])
+            master.add_command(**attributes)
             return
         elif xml.tag == 'tkinter.Menu.add_separator':
-            master.add_separator(**attributes[None])
+            master.add_separator(**attributes)
             return
 
         # produce instance from tag name
@@ -58,7 +58,7 @@ class WidgetFactory(object):
 
         # produce child widgets
         for child in xml.getchildren():
-            cls.from_etree(child)
+            cls.from_etree(child, instance)
 
         # all done - return created widget instance
         return instance
