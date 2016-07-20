@@ -6,9 +6,9 @@ this module provides an app class to use in python tk gui applications
 from tkapp.factories import WidgetFactory
 
 
-class TkApp(object):
+class TkBaseWindow(object):
     '''
-    this class represents a base tk app - custom apps should inherit from it
+    this class represents a tk window - extended by TkApp and TkDialog
     '''
 
     def __init__(self):
@@ -16,9 +16,8 @@ class TkApp(object):
         constructor
         '''
         self._layout = None
-        self._menu = None
-
         self._materialized = False
+
         self._bound_events = []
         self._widget_index = dict()
 
@@ -61,6 +60,26 @@ class TkApp(object):
         for (event, callback) in self._bound_events:
             self._root.bind(event, callback)
 
+    def spawn_dialog(self, dialog):
+        '''
+        take an instance of TkDialog and display it, blocks the main application
+        '''
+        dialog.set_master(self._root)
+        dialog.materialize()
+        dialog.wait()
+
+
+class TkApp(TkBaseWindow):
+    '''
+    this class represents a base tk app - custom apps should inherit from it
+    '''
+
+    def __init__(self):
+        '''
+        constructor
+        '''
+        super(TkApp, self).__init__()
+
     def run(self):
         '''
         start the tk main loop
@@ -72,3 +91,38 @@ class TkApp(object):
         quit the tk main loop
         '''
         self._root.quit()
+
+
+class TkDialog(TkBaseWindow):
+    '''
+    this class represents a tk dialog spawned on top of an application
+    '''
+
+    def __init__(self):
+        '''
+        constructor - set the given dialog layout
+        '''
+        super(TkDialog, self).__init__()
+
+        self._master = None
+
+    def set_master(self, master):
+        '''
+        set the parent window of the dialog
+        '''
+        self._master = master
+
+    def materialize(self):
+        '''
+        show the dialog and block for a result
+        '''
+        super(TkDialog, self).materialize()
+
+        self._root.transient(self._master)
+        self._root.grab_set()
+
+    def wait(self):
+        '''
+        block the parent window until the dialog is finished
+        '''
+        self._master.wait_window(self._root)
